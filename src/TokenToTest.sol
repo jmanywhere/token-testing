@@ -667,6 +667,8 @@ contract ManaCoin is Ownable, IERC20 {
         uint256 amount
     ) public override returns (bool) {
         require(_msgSender() != address(0), "ERC20: Zero Address");
+        // @audit - Address(0) and DEAD check can live in single require.
+        // @audit-ok -optimize use if(condition) revert CUSTOM_ERROR(); to save gas
         require(recipient != address(0), "ERC20: Zero Address");
         require(recipient != DEAD, "ERC20: Dead Address");
         require(
@@ -713,6 +715,8 @@ contract ManaCoin is Ownable, IERC20 {
         if (sender == owner() && lpPairs[recipient]) {
             _transferBothExcluded(sender, recipient, amount);
         } else if (lpPairs[sender] || lpPairs[recipient]) {
+            // @audit this can be simplified to a single flag instead of a comparison
+            // e.g. require(trandingActive, "msg");
             require(tradingActive == true, "ERC20: Trading is not active.");
 
             if (_isExcludedFromTax[sender] && !_isExcludedFromTax[recipient]) {
@@ -750,6 +754,7 @@ contract ManaCoin is Ownable, IERC20 {
                 }
             }
         } else {
+            // @audit Owner can skip TxChecks
             if (
                 sender == owner() ||
                 recipient == owner() ||
